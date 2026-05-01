@@ -1,0 +1,1011 @@
+/**
+ * BTN Website - Main JavaScript File
+ * Version: 1.0.0
+ * Description: Handles all interactive components including navigation, modals, sliders, and UI interactions
+ */
+
+(function($) {
+    'use strict';
+
+    // ========================================
+    // 1. DOM Ready Initialization
+    // ========================================
+    $(document).ready(function() {
+        initStickyHeader();
+        initMobileMenu();
+        initDropdowns();
+        initStickyButtons();
+        initPopupModals();
+        initContactPopup();
+        initSimulationPopup();
+        initGlobalSearch();
+        initSlickSliders();
+        initLazyLoading();
+        initBackButton();
+        initLanguageSwitcher();
+        initScrollToTop();
+        initFingerprintScanner();
+    });
+
+    // ========================================
+    // 2. Sticky Header
+    // ========================================
+    function initStickyHeader() {
+        const header = $('.sticky-header');
+        const headerHeight = header.outerHeight();
+        let lastScrollTop = 0;
+
+        $(window).on('scroll', function() {
+            const scrollTop = $(this).scrollTop();
+            
+            if (scrollTop > headerHeight) {
+                header.addClass('scrolled');
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    header.addClass('hide');
+                } else {
+                    header.removeClass('hide');
+                }
+            } else {
+                header.removeClass('scrolled hide');
+            }
+            
+            lastScrollTop = scrollTop;
+        });
+    }
+
+    // ========================================
+    // 3. Mobile Menu (Hamburger)
+    // ========================================
+    function initMobileMenu() {
+        const hamburgerBtn = $('.js-btn-bars');
+        const hamburgerMenu = $('.hamburger-menu');
+        const overlay = $('.overlay');
+        const body = $('body');
+        
+        // Open menu
+        hamburgerBtn.on('click', function(e) {
+            e.stopPropagation();
+            $(this).toggleClass('active');
+            hamburgerMenu.toggleClass('active');
+            overlay.fadeToggle(200);
+            body.toggleClass('menu-open');
+            
+            // Toggle icon
+            const iconBars = $('.icon-bars');
+            const iconClose = $('.icon-close');
+            iconBars.toggleClass('hidden');
+            iconClose.toggleClass('!hidden');
+        });
+        
+        // Close menu when clicking overlay
+        overlay.on('click', function() {
+            hamburgerBtn.removeClass('active');
+            hamburgerMenu.removeClass('active');
+            overlay.fadeOut(200);
+            body.removeClass('menu-open');
+            
+            $('.icon-bars').removeClass('hidden');
+            $('.icon-close').addClass('!hidden');
+        });
+        
+        // Handle mobile menu card clicks
+        $('.js-hamburger-menu-card').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+        });
+    }
+
+    // ========================================
+    // 4. Dropdowns & Mega Menu
+    // ========================================
+    function initDropdowns() {
+        // Language dropdown
+        const langDropdown = $('.lang-dropdown');
+        const btnDropLang = $('#btnDropLang');
+        
+        btnDropLang.on('click', function(e) {
+            e.stopPropagation();
+            langDropdown.toggleClass('active');
+            $('.lang-dropdown__options').slideToggle(200);
+        });
+        
+        // Service segmentation dropdown
+        $('.menu__cta').on('click', function(e) {
+            e.stopPropagation();
+            $(this).next('.menu-dropdown__options').toggleClass('active');
+        });
+        
+        // Close dropdowns when clicking outside
+        $(document).on('click', function() {
+            $('.lang-dropdown__options').slideUp(200);
+            $('.menu-dropdown__options').removeClass('active');
+            $('.lang-dropdown').removeClass('active');
+        });
+        
+        // Mega menu hover handling for mobile
+        if ($(window).width() < 1024) {
+            $('.nav__item .nav__cta').on('click', function(e) {
+                e.preventDefault();
+                const parent = $(this).closest('.nav__item');
+                const subNav = parent.find('.sub-nav');
+                
+                if (subNav.length) {
+                    subNav.toggleClass('active');
+                    parent.siblings().find('.sub-nav').removeClass('active');
+                }
+            });
+        }
+    }
+
+    // ========================================
+    // 5. Sticky Buttons (Bottom Right)
+    // ========================================
+    function initStickyButtons() {
+        const gotoTopBtn = $('.sticky-btn-goto-top');
+        const contactBtn = $('.sticky-btn-contact');
+        const contactPopup = $('.contact-us-popup');
+        
+        // Show/hide goto top button
+        $(window).on('scroll', function() {
+            const scrollTop = $(this).scrollTop();
+            if (scrollTop > 300) {
+                gotoTopBtn.removeClass('!hidden');
+            } else {
+                gotoTopBtn.addClass('!hidden');
+            }
+        });
+        
+        // Goto top functionality
+        gotoTopBtn.on('click', function() {
+            $('html, body').animate({
+                scrollTop: 0
+            }, 500);
+        });
+        
+        // Contact button - handled by separate function
+        if (contactBtn.length) {
+            contactBtn.on('click', function() {
+                contactPopup.toggleClass('active');
+            });
+        }
+        
+        // Location button
+        $('.sticky-buttons .btn--circle').first().on('click', function() {
+            if (typeof window.location !== 'undefined') {
+                window.location.href = '/Location';
+            }
+        });
+    }
+
+    // ========================================
+    // 6. Popup Modals (Global Search, etc.)
+    // ========================================
+    function initPopupModals() {
+        // Open modal
+        $('.popup-modal__btn--open').on('click', function() {
+            const target = $(this).data('target');
+            const modal = $(target);
+            
+            modal.addClass('active');
+            $('body').addClass('modal-open');
+            
+            // If it's search modal, focus on input
+            if (target === '#popupGlobalSearch') {
+                setTimeout(function() {
+                    $('#inputSearch').focus();
+                }, 100);
+            }
+        });
+        
+        // Close modal
+        $('.popup-modal__btn--close, .popup-modal').on('click', function(e) {
+            if ($(e.target).hasClass('popup-modal') || $(e.target).hasClass('popup-modal__btn--close')) {
+                $('.popup-modal').removeClass('active');
+                $('body').removeClass('modal-open');
+            }
+        });
+        
+        // Prevent modal content click from closing
+        $('.global-search__cont, .simulation-popup__contents, .hamburger-menu').on('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+
+    // ========================================
+    // 7. Contact Us Popup
+    // ========================================
+    function initContactPopup() {
+        const contactPopup = $('.contact-us-popup');
+        const closeBtn = $('.contact-us-popup .close-icon');
+        const contactBtn = $('.sticky-btn-contact');
+        
+        // Open popup
+        contactBtn.on('click', function(e) {
+            e.stopPropagation();
+            contactPopup.toggleClass('active');
+        });
+        
+        // Close popup
+        closeBtn.on('click', function() {
+            contactPopup.removeClass('active');
+        });
+        
+        // Close on outside click
+        $(document).on('click', function(e) {
+            if (!contactPopup.is(e.target) && contactPopup.has(e.target).length === 0 && !contactBtn.is(e.target)) {
+                contactPopup.removeClass('active');
+            }
+        });
+        
+        // Handle contact links - track clicks
+        $('.contact-us-popup__menu a').on('click', function() {
+            const platform = $(this).find('span').text();
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'contact_click', {
+                    'event_category': 'Contact',
+                    'event_label': platform
+                });
+            }
+        });
+    }
+
+    // ========================================
+    // 8. Simulation Popup
+    // ========================================
+    function initSimulationPopup() {
+        const simulationPopup = $('.simulation-popup');
+        const closeBtn = $('.simulation-popup .close-icon');
+        
+        // Note: This popup may be triggered from other buttons
+        // Add trigger buttons as needed
+        
+        closeBtn.on('click', function() {
+            simulationPopup.removeClass('active');
+        });
+    }
+
+    // ========================================
+    // 9. Global Search Functionality
+    // ========================================
+    function initGlobalSearch() {
+        const searchForm = $('#formGlobalSearch');
+        const searchInput = $('#inputSearch');
+        
+        searchForm.on('submit', function(e) {
+            e.preventDefault();
+            const query = searchInput.val().trim();
+            
+            if (query.length > 0) {
+                // Track search event
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'search', {
+                        'event_category': 'Search',
+                        'event_label': query
+                    });
+                }
+                
+                // Redirect to search results page
+                window.location.href = '/en/Search?query=' + encodeURIComponent(query);
+            }
+        });
+        
+        // Search suggestions (if needed)
+        let searchTimeout;
+        searchInput.on('input', function() {
+            clearTimeout(searchTimeout);
+            const query = $(this).val().trim();
+            
+            if (query.length > 2) {
+                searchTimeout = setTimeout(function() {
+                    fetchSearchSuggestions(query);
+                }, 300);
+            }
+        });
+    }
+    
+    function fetchSearchSuggestions(query) {
+        // AJAX call to get search suggestions
+        // This is a placeholder - implement based on backend API
+        $.ajax({
+            url: '/api/search/suggestions',
+            method: 'GET',
+            data: { q: query },
+            success: function(data) {
+                // Render suggestions
+                renderSearchSuggestions(data);
+            },
+            error: function() {
+                console.log('Failed to fetch suggestions');
+            }
+        });
+    }
+    
+    function renderSearchSuggestions(suggestions) {
+        // Implementation for rendering suggestions
+        const suggestionContainer = $('.search-suggestions');
+        if (suggestionContainer.length && suggestions.length) {
+            let html = '<ul class="suggestions-list">';
+            suggestions.forEach(function(item) {
+                html += '<li><a href="' + item.url + '">' + item.title + '</a></li>';
+            });
+            html += '</ul>';
+            suggestionContainer.html(html).show();
+        }
+    }
+
+    // ========================================
+    // 10. Slick Sliders Initialization
+    // ========================================
+    function initSlickSliders() {
+        // Other galeries slider (mobile)
+        if ($('.other-galeries__list--slider .slider').length && typeof $.fn.slick !== 'undefined') {
+            $('.other-galeries__list--slider .slider').slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                autoplay: false,
+                dots: true,
+                arrows: true,
+                infinite: false,
+                responsive: [
+                    {
+                        breakpoint: 640,
+                        settings: {
+                            slidesToShow: 1.2,
+                            slidesToScroll: 1,
+                            centerMode: true,
+                            centerPadding: '20px'
+                        }
+                    },
+                    {
+                        breakpoint: 480,
+                        settings: {
+                            slidesToShow: 1.1,
+                            slidesToScroll: 1,
+                            centerMode: true,
+                            centerPadding: '15px'
+                        }
+                    }
+                ]
+            });
+        }
+        
+        // Conventional KPR products slider
+        if ($('.conventional-kpr__products--slider .slider').length && typeof $.fn.slick !== 'undefined') {
+            $('.conventional-kpr__products--slider .slider').slick({
+                slidesToShow: 3,
+                slidesToScroll: 1,
+                autoplay: true,
+                autoplaySpeed: 5000,
+                dots: true,
+                arrows: true,
+                responsive: [
+                    {
+                        breakpoint: 1024,
+                        settings: {
+                            slidesToShow: 2,
+                            slidesToScroll: 1
+                        }
+                    },
+                    {
+                        breakpoint: 768,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1
+                        }
+                    }
+                ]
+            });
+        }
+        
+        // Multiple items slider
+        if ($('.multiple-items').length && typeof $.fn.slick !== 'undefined') {
+            $('.multiple-items').each(function() {
+                if (!$(this).hasClass('slick-initialized')) {
+                    $(this).slick({
+                        infinite: true,
+                        slidesToShow: 4,
+                        slidesToScroll: 1,
+                        dots: false,
+                        arrows: true,
+                        responsive: [
+                            {
+                                breakpoint: 1024,
+                                settings: {
+                                    slidesToShow: 3
+                                }
+                            },
+                            {
+                                breakpoint: 768,
+                                settings: {
+                                    slidesToShow: 2
+                                }
+                            },
+                            {
+                                breakpoint: 640,
+                                settings: {
+                                    slidesToShow: 1.2,
+                                    slidesToScroll: 1,
+                                    centerMode: true,
+                                    centerPadding: '20px'
+                                }
+                            }
+                        ]
+                    });
+                }
+            });
+        }
+    }
+
+    // ========================================
+    // 11. Lazy Loading Images
+    // ========================================
+    function initLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const src = img.getAttribute('data-src');
+                        
+                        if (src) {
+                            img.src = src;
+                            img.removeAttribute('data-src');
+                        }
+                        
+                        img.classList.add('loaded');
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+            
+            $('img[loading="lazy"]').each(function() {
+                imageObserver.observe(this);
+            });
+        } else {
+            // Fallback for older browsers
+            $('img[loading="lazy"]').each(function() {
+                const img = $(this);
+                const src = img.data('src');
+                if (src) {
+                    img.attr('src', src);
+                }
+            });
+        }
+        
+        // Also handle background images
+        $('[data-bg]').each(function() {
+            const element = $(this);
+            const bgUrl = element.data('bg');
+            if (bgUrl) {
+                element.css('background-image', 'url(' + bgUrl + ')');
+            }
+        });
+    }
+
+    // ========================================
+    // 12. Back Button Functionality
+    // ========================================
+    function initBackButton() {
+        $('.galery-detail .btn').on('click', function(e) {
+            e.preventDefault();
+            window.history.back();
+        });
+    }
+
+    // ========================================
+    // 13. Language Switcher
+    // ========================================
+    function initLanguageSwitcher() {
+        window.SwitchToLanguage = function(lang, currentLang, url) {
+            // Track language switch
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'language_switch', {
+                    'event_category': 'Language',
+                    'event_label': lang
+                });
+            }
+            
+            // Store preference
+            localStorage.setItem('preferred_language', lang);
+            
+            // Redirect to language-specific URL
+            window.location.href = url;
+            return false;
+        };
+        
+        // Apply saved language preference
+        const savedLang = localStorage.getItem('preferred_language');
+        if (savedLang && savedLang !== $('html').attr('lang')) {
+            // Could redirect or update content
+            console.log('Saved language preference:', savedLang);
+        }
+    }
+
+    // ========================================
+    // 14. Scroll to Top Functionality
+    // ========================================
+    function initScrollToTop() {
+        // Additional scroll to top handling
+        $('.scroll-to-top, [data-scroll-to-top]').on('click', function(e) {
+            e.preventDefault();
+            const target = $(this).data('scroll-to-top') || 0;
+            $('html, body').animate({
+                scrollTop: target
+            }, 500);
+        });
+        
+        // Smooth scroll for anchor links
+        $('a[href^="#"]:not([href="#"])').on('click', function(e) {
+            const target = $(this.hash);
+            if (target.length) {
+                e.preventDefault();
+                $('html, body').animate({
+                    scrollTop: target.offset().top - 100
+                }, 500);
+            }
+        });
+    }
+
+    // ========================================
+    // 15. Fingerprint Scanner (For Demo/Placeholder)
+    // ========================================
+    function initFingerprintScanner() {
+        // This is a placeholder for fingerprint scanner functionality
+        // Actual implementation would require native device APIs
+        
+        $('.fingerprint-scanner, [data-fingerprint]').on('click', function() {
+            if (window.PublicKeyCredential) {
+                // WebAuthn supported
+                simulateFingerprintAuth();
+            } else {
+                console.log('Fingerprint authentication not supported');
+                showNotification('Fingerprint authentication is not supported on this device', 'warning');
+            }
+        });
+    }
+    
+    function simulateFingerprintAuth() {
+        // Placeholder for actual fingerprint authentication
+        showNotification('Fingerprint authentication demo - integrate with actual WebAuthn API', 'info');
+    }
+
+    // ========================================
+    // 16. Notification System
+    // ========================================
+    function showNotification(message, type = 'info') {
+        const notificationHtml = `
+            <div class="notification notification--${type}">
+                <div class="notification__content">
+                    <span class="notification__message">${message}</span>
+                    <button class="notification__close">&times;</button>
+                </div>
+            </div>
+        `;
+        
+        const $notification = $(notificationHtml);
+        $('body').append($notification);
+        
+        $notification.find('.notification__close').on('click', function() {
+            $notification.fadeOut(300, function() {
+                $(this).remove();
+            });
+        });
+        
+        setTimeout(function() {
+            $notification.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 5000);
+    }
+
+    // ========================================
+    // 17. Form Validation & Handling
+    // ========================================
+    function initFormValidation() {
+        // Generic form validation
+        $('form[data-validate]').on('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+            
+            $(this).find('[required]').each(function() {
+                const value = $(this).val().trim();
+                if (!value) {
+                    isValid = false;
+                    showFieldError($(this), 'This field is required');
+                } else {
+                    clearFieldError($(this));
+                }
+            });
+            
+            if (isValid) {
+                // Submit form or process data
+                processForm($(this));
+            }
+        });
+    }
+    
+    function showFieldError($field, message) {
+        $field.addClass('error');
+        const errorMsg = $field.siblings('.error-message');
+        if (!errorMsg.length) {
+            $field.after(`<div class="error-message text-red text-xs mt-1">${message}</div>`);
+        }
+    }
+    
+    function clearFieldError($field) {
+        $field.removeClass('error');
+        $field.siblings('.error-message').remove();
+    }
+    
+    function processForm($form) {
+        // AJAX form submission
+        const formData = $form.serialize();
+        $.ajax({
+            url: $form.attr('action') || '/api/submit',
+            method: $form.attr('method') || 'POST',
+            data: formData,
+            success: function(response) {
+                showNotification('Form submitted successfully!', 'success');
+                if ($form.data('redirect')) {
+                    setTimeout(function() {
+                        window.location.href = $form.data('redirect');
+                    }, 1500);
+                }
+            },
+            error: function() {
+                showNotification('An error occurred. Please try again.', 'error');
+            }
+        });
+    }
+
+    // ========================================
+    // 18. Table Sorting (For FAQ/Tables)
+    // ========================================
+    function initTableSorting() {
+        $('table.sortable thead th').on('click', function() {
+            const table = $(this).closest('table');
+            const index = $(this).index();
+            const rows = table.find('tbody tr').get();
+            const ascending = $(this).hasClass('asc');
+            
+            rows.sort(function(a, b) {
+                const aVal = $(a).find('td').eq(index).text();
+                const bVal = $(b).find('td').eq(index).text();
+                
+                if ($.isNumeric(aVal) && $.isNumeric(bVal)) {
+                    return ascending ? aVal - bVal : bVal - aVal;
+                }
+                return ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+            
+            $.each(rows, function(i, row) {
+                table.find('tbody').append(row);
+            });
+            
+            table.find('th').removeClass('asc desc');
+            $(this).toggleClass('asc', !ascending).toggleClass('desc', ascending);
+        });
+    }
+
+    // ========================================
+    // 19. Accordion (For FAQ)
+    // ========================================
+    function initAccordion() {
+        $('.accordion__header').on('click', function() {
+            const parent = $(this).closest('.accordion__item');
+            const content = parent.find('.accordion__content');
+            
+            if (parent.hasClass('active')) {
+                content.slideUp(300);
+                parent.removeClass('active');
+            } else {
+                $('.accordion__item').removeClass('active');
+                $('.accordion__content').slideUp(300);
+                content.slideDown(300);
+                parent.addClass('active');
+            }
+        });
+    }
+
+    // ========================================
+    // 20. Chart Initialization (If charts exist)
+    // ========================================
+    function initCharts() {
+        if (typeof Chart !== 'undefined') {
+            $('[data-chart]').each(function() {
+                const canvas = $(this)[0];
+                const chartData = $(this).data('chart-data');
+                const chartType = $(this).data('chart-type') || 'line';
+                
+                if (chartData && canvas) {
+                    new Chart(canvas, {
+                        type: chartType,
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    // ========================================
+    // 21. Window Resize Handlers
+    // ========================================
+    $(window).on('resize', function() {
+        // Handle responsive adjustments
+        const windowWidth = $(window).width();
+        
+        // Reinitialize sliders if needed
+        if (windowWidth >= 768) {
+            // Destroy mobile sliders and show grid
+            if ($('.other-galeries__list--slider .slider').hasClass('slick-initialized')) {
+                $('.other-galeries__list--slider .slider').slick('unslick');
+            }
+        } else {
+            // Reinitialize mobile sliders
+            if (!$('.other-galeries__list--slider .slider').hasClass('slick-initialized')) {
+                initSlickSliders();
+            }
+        }
+    });
+
+    // ========================================
+    // 22. Page Load Animation
+    // ========================================
+    function initPageLoadAnimation() {
+        $('body').addClass('page-loaded');
+        
+        // Fade in content
+        $('.site-main').css('opacity', '0').animate({
+            opacity: 1
+        }, 400);
+    }
+
+    // ========================================
+    // 23. Track User Interactions
+    // ========================================
+    function initTracking() {
+        // Track outbound links
+        $('a[href^="http"]:not([href*="' + window.location.hostname + '"])').on('click', function() {
+            const href = $(this).attr('href');
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'outbound_click', {
+                    'event_category': 'Outbound Link',
+                    'event_label': href
+                });
+            }
+        });
+        
+        // Track file downloads
+        $('a[href$=".pdf"], a[href$=".doc"], a[href$=".docx"], a[href$=".xls"], a[href$=".xlsx"]').on('click', function() {
+            const href = $(this).attr('href');
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'download', {
+                    'event_category': 'File Download',
+                    'event_label': href
+                });
+            }
+        });
+    }
+
+    // ========================================
+    // 24. Cookie Consent (GDPR Compliance)
+    // ========================================
+    function initCookieConsent() {
+        const cookieConsent = localStorage.getItem('cookie_consent');
+        
+        if (!cookieConsent) {
+            const consentHtml = `
+                <div class="cookie-consent">
+                    <div class="cookie-consent__content">
+                        <p>We use cookies to enhance your browsing experience. By continuing to use our site, you agree to our <a href="/en/Privacy-Policy">Privacy Policy</a>.</p>
+                        <div class="cookie-consent__buttons">
+                            <button class="btn btn--primary btn--sm" id="acceptCookies">Accept</button>
+                            <button class="btn btn--outline btn--sm" id="declineCookies">Decline</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(consentHtml);
+            
+            $('#acceptCookies').on('click', function() {
+                localStorage.setItem('cookie_consent', 'accepted');
+                $('.cookie-consent').fadeOut(300, function() {
+                    $(this).remove();
+                });
+                enableTracking();
+            });
+            
+            $('#declineCookies').on('click', function() {
+                localStorage.setItem('cookie_consent', 'declined');
+                $('.cookie-consent').fadeOut(300, function() {
+                    $(this).remove();
+                });
+                disableTracking();
+            });
+        } else if (cookieConsent === 'accepted') {
+            enableTracking();
+        } else {
+            disableTracking();
+        }
+    }
+    
+    function enableTracking() {
+        // Enable analytics tracking
+        if (typeof gtag !== 'undefined') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'granted'
+            });
+        }
+    }
+    
+    function disableTracking() {
+        // Disable analytics tracking
+        if (typeof gtag !== 'undefined') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'denied'
+            });
+        }
+    }
+
+    // ========================================
+    // 25. Helper Functions
+    // ========================================
+    
+    // Debounce function for performance
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction() {
+            const later = function() {
+                clearTimeout(timeout);
+                func();
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Throttle function for scroll events
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(function() {
+                    inThrottle = false;
+                }, limit);
+            }
+        };
+    }
+    
+    // Check if element is in viewport
+    function isInViewport(element) {
+        const rect = element.getBoundingClientRect();
+        return (
+            rect.top >= 0 &&
+            rect.left >= 0 &&
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
+    }
+    
+    // Smooth scroll to element
+    function smoothScrollTo(element, offset = 0) {
+        const targetPosition = $(element).offset().top - offset;
+        $('html, body').animate({
+            scrollTop: targetPosition
+        }, 500);
+    }
+    
+    // Export utility functions to global scope
+    window.BTN = {
+        debounce: debounce,
+        throttle: throttle,
+        isInViewport: isInViewport,
+        smoothScrollTo: smoothScrollTo,
+        showNotification: showNotification
+    };
+
+    // Initialize all components
+    function initAll() {
+        initFormValidation();
+        initTableSorting();
+        initAccordion();
+        initCharts();
+        initPageLoadAnimation();
+        initTracking();
+        initCookieConsent();
+    }
+    
+    initAll();
+
+})(jQuery);
+
+// ========================================
+// 26. GSAP Animations (If GSAP is loaded)
+// ========================================
+if (typeof gsap !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scroll animations
+        if (typeof ScrollTrigger !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+            
+            // Fade in elements on scroll
+            gsap.utils.toArray('.fade-in').forEach(function(element) {
+                gsap.from(element, {
+                    scrollTrigger: {
+                        trigger: element,
+                        start: 'top 80%',
+                        end: 'bottom 20%',
+                        toggleActions: 'play none none reverse'
+                    },
+                    opacity: 0,
+                    y: 30,
+                    duration: 0.8,
+                    ease: 'power2.out'
+                });
+            });
+            
+            // Stagger animations for cards
+            gsap.utils.toArray('.stagger-item').forEach(function(element, index) {
+                gsap.from(element, {
+                    scrollTrigger: {
+                        trigger: element,
+                        start: 'top 90%',
+                        toggleActions: 'play none none reverse'
+                    },
+                    opacity: 0,
+                    y: 20,
+                    duration: 0.6,
+                    delay: index * 0.1,
+                    ease: 'power2.out'
+                });
+            });
+        }
+    });
+}
+
+// ========================================
+// 27. Additional CSS Classes (Dynamic)
+// ========================================
+(function() {
+    // Add body class for browser detection
+    const userAgent = navigator.userAgent;
+    if (userAgent.indexOf('Chrome') > -1) $('body').addClass('browser-chrome');
+    else if (userAgent.indexOf('Firefox') > -1) $('body').addClass('browser-firefox');
+    else if (userAgent.indexOf('Safari') > -1) $('body').addClass('browser-safari');
+    else if (userAgent.indexOf('Edge') > -1) $('body').addClass('browser-edge');
+    
+    // Add body class for device detection
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)) {
+        $('body').addClass('is-mobile');
+    } else {
+        $('body').addClass('is-desktop');
+    }
+    
+    // Add touch detection class
+    if ('ontouchstart' in window) {
+        $('body').addClass('touch-device');
+    } else {
+        $('body').add-class('no-touch');
+    }
+})();
+
+// ========================================
+// 28. Service Worker Registration (Optional)
+// ========================================
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').then(function(registration) {
+            console.log('ServiceWorker registration successful');
+        }).catch(function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+}
